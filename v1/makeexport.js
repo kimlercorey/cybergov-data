@@ -95,8 +95,8 @@ function startRead(itemType){
 		if (item._id.$oid != null) item._id = item._id.$oid;
 		// individual items do not include the collection type but angular expects it
 		if (itemType) {
-			pre = '{"'+itemType+'" :[';
-			post = ']}';
+			pre = '{"'+itemType.slice(0, -1)+'" :';
+			post = '}';
 		}		
 
 		item = pre + JSON.stringify(item)+ post
