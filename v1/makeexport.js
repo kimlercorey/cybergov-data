@@ -1,22 +1,11 @@
 const exec = require('child_process').exec;
 
-var exportsCount = 5;
+var exportsCount = 4;
 var itemsCount = 0;
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 
-exec('rm *.json; rm -rf articles collections sections questions;', (error, stdout, stderr) => {
-  if (error) {
-    console.error(`exec error: ${error}`);
-    return;
-  }
-  console.log(`stdout: ${stdout}`);
-  //console.log(`stderr: ${stderr}`);
-  exportsCount = exportsCount -1;
-  processRecords();
-});
-
-exec('mongoexport --db test-keystone --collection questions --out questions.json --jsonArray', (error, stdout, stderr) => {
+exec('rm *.json; rm -rf articles collections sections;', (error, stdout, stderr) => {
   if (error) {
     console.error(`exec error: ${error}`);
     return;
@@ -66,7 +55,6 @@ function processRecords(){
 		startRead("articles");
 		startRead("collections");
                 startRead("sections");
-		startRead("questions");
 	} 
 }
 
@@ -86,6 +74,7 @@ function startRead(itemType){
 
    for (var i = 0; i < jsonContent.length; i++) {
 	console.log("--------------------------------------------"+itemType+"["+i+"]");
+		
 		var item = jsonContent[i]
 		var itemId = item._id.$oid
 		var pre, post
@@ -100,15 +89,15 @@ function startRead(itemType){
 		}		
 
 		item = pre + JSON.stringify(item)+ post
- 
+
              //console.log(itemId);
-             console.dir(item);
+             //console.dir(item);
 
 	     fs.writeFile(itemType+"/"+itemId+".json", item, function(err) {
                  if(err) {
                        return console.log(err);
                  }
-		console.log( "wrote:", item); 
+		 //console.log( "wrote:", item); 
 		  itemsCount = itemsCount -1;
                   cleanUp();
                   //console.log("The file was saved!");
@@ -125,14 +114,23 @@ function startRead(itemType){
 		console.log("Start CLEANUP");
 
 
-		exec('curl -o articles.json http://cyber.tcg.com/api/v1/articles; curl -o sections.json http://cyber.tcg.com/api/v1/sections; curl -o collections.json http://cyber.tcg.com/api/v1/collections; curl -o nav.json http://cyber.tcg.com/api/v2/collections; curl -o questions.json http://cyber.tcg.com/api/v1/questions;', (error, stdout, stderr) => {
+		exec('curl -o articles.json http://cyber.tcg.com/api/v1/articles; curl -o sections.json http://cyber.tcg.com/api/v1/sections; curl -o collections.json http://cyber.tcg.com/api/v1/collections; curl -o nav.json http://cyber.tcg.com/api/v2/collections;', (error, stdout, stderr) => {
   if (error) {
     console.error(`exec error: ${error}`);
     return;
   }
   console.log(`stdout: ${stdout}`);
   //console.log(`stderr: ${stderr}`);
-  console.log("done.");
+
+   exec('mongodump --db test-keystone', (error, stdout, stderr) => {
+
+      if (error) {
+        console.error(`exec error: ${error}`);
+      return;
+      }    
+
+      console.log("done.");
+     });
  
 });
 
@@ -144,6 +142,6 @@ function startRead(itemType){
 // mongoexport --db test-keystone --collection sections --out sections.json --jsonArray
 // mongoexport --db test-keystone --collection articles --out articles.json --jsonArray
 
-
-
-
+// upgrade to mongo 3 so that we can use the following: 
+// mongodump --db test-keystone --gzip --archive=test-keystone
+// mongorestore --gzip --archive=test-keystone
