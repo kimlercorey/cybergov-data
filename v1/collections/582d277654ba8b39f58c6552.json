@@ -1,1 +1,1 @@
-{"collection" :{"_id":"582d277654ba8b39f58c6552","slug":"search","title":"Search","state":"draft","sections":[],"__v":0,"content":{"brief":"","extended":"","micro":""},"icon":"","rightNavOrder":1,"offCanvas":true,"controller":"search","template":"search"}}
+{"collection" :{"_id":"582d277654ba8b39f58c6552","slug":"search","title":"Search","state":"draft","sections":[],"__v":0,"content":{"brief":"","extended":"","micro":""},"icon":"","rightNavOrder":1,"offCanvas":false,"controller":"","template":"search","shortTitle":"","headerTemplate":"header-search"}}
