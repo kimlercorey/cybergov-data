@@ -4,8 +4,14 @@ var itemsCount = 0;
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var forEachSync = require('async-foreach').forEach;
+var X2JS = require('x2js');
+var request = require('request');
+var dateformat = require('dateformat');
+var hashGen = require('object-hash');
 
-var apiUrl = 'http://localhost/api';
+
+//var apiUrl = 'http://localhost/api';
+var apiUrl = 'http://cyber.tcg.com/api';
 
 var contentTypes = [
   'globals',
@@ -42,7 +48,6 @@ forEachSync(contentTypes, function(contentType) {
     processRecords();
   });
 });
-
 
 
 function processRecords(){
@@ -111,12 +116,14 @@ function startRead(contentType){
 
       var command = '';
       forEachSync(contentTypes, function(contentType) {
-        command += 'curl -o ' + contentType + '.json ' + apiUrl + '/v1/' + contentType + '; ';
+        command += 'sudo curl -o ' + contentType + '.json ' + apiUrl + '/v1/' + contentType + '; ';
       });
+
+      command += 'sudo curl -o nav.json ' + apiUrl + '/v1/collections;';
 
       console.log(command);
 
-      exec(command + 'curl -o nav.json ' + apiUrl + '/v2/collections;', (error, stdout, stderr) => {
+      exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error(`exec error: ${error}`);
           return;
@@ -135,6 +142,49 @@ function startRead(contentType){
     }
   }
 }
+
+
+// Get alerts XML from external source and write JSON
+
+var x2js = new X2JS();
+var url = 'https://www.us-cert.gov/ncas/alerts.xml';
+request(url, function(req, res) {
+  var raw = x2js.xml2js(res.body);
+  var jsonString = '{"alerts": [';
+
+  raw.rss.channel.item.forEach(function(raw, index) {
+    var o = new Object();
+    var single = '{"alert": ';
+    var hash = hashGen(raw.title.substring(0, raw.title.indexOf(":")));
+
+    o._id = hash;
+    o.certid = raw.title.substring(0, raw.title.indexOf(":"));
+    o.title = raw.title.substring(raw.title.indexOf(":") + 2);
+    o.link = raw.link;
+
+    var pubDate = dateformat(raw.pubDate, "isoUtcDateTime");
+    o.publishedDate = pubDate;
+
+    var over = raw.description.match("<h3>Overview</h3>\n\t\t<p>(.*)</p>\t\t\n\t\t<h3>")[1];
+    over = over.replace(/\[.*\]/g,'');
+    over = over.replace(/(<([^>]+)>)/ig, '');
+    over = over.split(' ').slice(0,24).join(' ');
+    o.overview = over + '&hellip;';
+
+    single = single.concat(JSON.stringify(o), '}');
+    singleFile = 'alerts/' + hash + '.json';
+    fs.writeFile(singleFile, single);
+
+    if (index == 0) {
+      jsonString = jsonString.concat(JSON.stringify(o));
+    } else {
+      jsonString = jsonString.concat(', ', JSON.stringify(o));
+    }
+  });
+
+  jsonString = jsonString.concat(']}');
+  fs.writeFile('alerts.json', jsonString);
+});
 
 // mongoexport --db test-keystone --collection collections --out collections.json --jsonArray
 // mongoexport --db test-keystone --collection sections --out sections.json --jsonArray
