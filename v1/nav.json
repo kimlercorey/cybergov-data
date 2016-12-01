@@ -39,7 +39,7 @@
     "slug": "report-a-cyber-incident",
     "title": "Report a Cyber Incident",
     "controller": "",
-    "homePageOrder": 4,
+    "homePageOrder": "",
     "offCanvas": false,
     "rightNavOrder": 6,
     "template": "",
