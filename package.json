@@ -4,6 +4,7 @@
   "description": "Parse the alerts from us-cert.gov to json",
   "main": "parse.js",
   "dependencies": {
+    "mkdirp": "^0.5.1",
     "request": "^2.78.0",
     "x2js": "^3.0.1"
   },
